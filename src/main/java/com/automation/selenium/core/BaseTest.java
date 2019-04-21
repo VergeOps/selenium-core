@@ -23,6 +23,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.ITest;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import com.automation.selenium.core.assertions.SoftAssert;
@@ -278,6 +279,17 @@ public abstract class BaseTest implements ITest {
 	public synchronized void afterTest() {
 		ExtentManager.getInstance().flush();
 	}
+	
+	/**
+	 * Method to set Sauce build ID before suite
+	 */
+	@BeforeSuite(alwaysRun = true)
+	public synchronized void beforeSuite() {
+		if (System.getProperty(PropertyConstants.SAUCE_USER) != null && !System.getProperty(PropertyConstants.SAUCE_USER).equals("")) {
+			System.setProperty(PropertyConstants.SAUCE_BUILD, "Selenium Sample Build " + System.currentTimeMillis());
+	        
+		}
+	}
 
 	private static void initializeThreadLocal() {
 
@@ -325,7 +337,7 @@ public abstract class BaseTest implements ITest {
 
 	    	caps.setCapability("platform", "Windows 10");
 	    	
-	    	caps.setCapability("build", "Local Run " + System.currentTimeMillis());
+	    	caps.setCapability("build", System.getProperty(PropertyConstants.SAUCE_BUILD));
 	    	
 	    	caps.setCapability("project", "Selenium Automation");
 	    	caps.setCapability("name", threadDriver.get().getTestName());

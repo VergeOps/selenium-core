@@ -14,6 +14,7 @@ public class PropertyConstants {
 
 	public static final String SAUCE_USER = "sauce.user";
 	public static final String SAUCE_ACCESS_KEY = "sauce.key";
+	public static final String SAUCE_BUILD = "sauce.build";
 
 }
 
