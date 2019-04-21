@@ -21,6 +21,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.ITest;
 import org.testng.ITestResult;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import com.automation.selenium.core.assertions.SoftAssert;
@@ -255,6 +256,14 @@ public abstract class BaseTest implements ITest {
 
 		threadDriver.get().setDriver(null);
 	  }
+	}
+	
+	/**
+	 * Method to flush report after every test
+	 */
+	@AfterTest(alwaysRun = true)
+	public synchronized void afterTest() {
+		ExtentManager.getInstance().flush();
 	}
 
 	private static void initializeThreadLocal() {

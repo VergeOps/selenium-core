@@ -122,7 +122,7 @@ public class ExtentListener implements ITestListener {
 	 */
 	@Override
 	public synchronized void onStart(ITestContext context) {
-		logger.debug("Extent Reports Version 3 Test Suite started!");
+		logger.debug("Extent Reports Version 4 Test Suite started!");
 	}
 
 	/**
