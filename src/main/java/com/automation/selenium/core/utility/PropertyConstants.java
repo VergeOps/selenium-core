@@ -12,11 +12,8 @@ public class PropertyConstants {
 	public static final String SCHEMA_NAME_PROPERTY = "schema.name";
 	public static final String CLOSE_BROWSER = "close.browser";
 
-	public static final String BROWSER_STACK_USER = "browserstack.user";
-	public static final String BROWSER_STACK_TOKEN = "browserstack.token";
-	public static final String BROWSER_PROXY_USER = "browserstack.proxy.user";
-	public static final String BROWSER_PROXY_PASSWORD = "browserstack.proxy.password";
-	public static final String BROWSER_STACK_IDENTIFIER = "browserstack.identifier";
-	
+	public static final String SAUCE_USER = "sauce.user";
+	public static final String SAUCE_ACCESS_KEY = "sauce.key";
+
 }
 

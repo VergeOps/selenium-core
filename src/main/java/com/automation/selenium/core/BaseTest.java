@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -224,7 +225,7 @@ public abstract class BaseTest implements ITest {
 		         driver = createRemoteDriver(options, DesiredCapabilities.internetExplorer());
 			}
 			
-		} else if (browser != null && browser.startsWith("ff")) {
+		} else if (browser != null && browser.startsWith("firefox")) {
 			
 		    FirefoxOptions options = new FirefoxOptions();
 			options.setCapability(CapabilityType.UNEXPECTED_ALERT_BEHAVIOUR, "ignore");
@@ -236,6 +237,8 @@ public abstract class BaseTest implements ITest {
 			}
 			
 		}
+		
+		getExtentTest().info("Browser: " + browser);
 		
 		driver.manage().timeouts().implicitlyWait(Constants.WEBDRIVER_TIMEOUT, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -249,12 +252,22 @@ public abstract class BaseTest implements ITest {
 	 * @param result The result of a test
 	 */
 	protected void killWebDriver(ITestResult result) {
-	  if (System.getProperty(PropertyConstants.CLOSE_BROWSER) == null || !System.getProperty(PropertyConstants.CLOSE_BROWSER).equalsIgnoreCase("false")) {
-
-		threadDriver.get().getDriver().close();
-		threadDriver.get().getDriver().quit();
-
-		threadDriver.get().setDriver(null);
+		
+		boolean isSauce = false;
+	  
+		if (System.getProperty(PropertyConstants.SAUCE_USER) != null && !System.getProperty(PropertyConstants.SAUCE_USER).equals("")) {
+			isSauce = true;
+			((JavascriptExecutor)getDriver()).executeScript("sauce:job-result=" + (result.isSuccess() ? "passed" : "failed"));
+	        
+		}
+		
+		if (isSauce || (System.getProperty(PropertyConstants.CLOSE_BROWSER) == null || !System.getProperty(PropertyConstants.CLOSE_BROWSER).equalsIgnoreCase("false"))) {
+	
+			threadDriver.get().getDriver().close();
+			threadDriver.get().getDriver().quit();
+	
+			threadDriver.get().setDriver(null);
+			
 	  }
 	}
 	
@@ -292,55 +305,48 @@ public abstract class BaseTest implements ITest {
 	    
 	    RemoteWebDriver driver = null;
 	    
-	    String browserStackUser = System.getProperty(PropertyConstants.BROWSER_STACK_USER);
-	    String browserStackToken = System.getProperty(PropertyConstants.BROWSER_STACK_TOKEN);
+	    String sauceUser = System.getProperty(PropertyConstants.SAUCE_USER);
+	    String sauceAccessKey = System.getProperty(PropertyConstants.SAUCE_ACCESS_KEY);
 	    
-	    String hubURL = "[YOUR_HUB]";
+	    String hubURL = "http://localhost:4444/wd/hub";
 	    
-	    if ((browserStackUser != null && !browserStackUser.isEmpty()) ||
-    			(browserStackToken != null && !browserStackToken.isEmpty())) {
-	    	hubURL = "https://" + browserStackUser + ":" + browserStackToken + "@hub-cloud.browserstack.com/wd/hub";
+	    if ((sauceUser != null && !sauceUser.isEmpty()) ||
+    			(sauceAccessKey != null && !sauceAccessKey.isEmpty())) {
+	    	hubURL = "http://ondemand.saucelabs.com:80/wd/hub";
 	    	
-	    	String browserStackProxyUser = System.getProperty(PropertyConstants.BROWSER_PROXY_USER);
-		    String browserStackProxyPasssword = System.getProperty(PropertyConstants.BROWSER_PROXY_PASSWORD);
+	    	caps.setCapability("username", sauceUser);
+	        caps.setCapability("accessKey", sauceAccessKey);
+
+	        caps.setCapability("name", "Selenium Automation");
+
+	        caps.setCapability("maxDuration", 3600);
+	        caps.setCapability("commandTimeout", 600);
+	        caps.setCapability("idleTimeout", 1000);
+
+	    	caps.setCapability("platform", "Windows 10");
 	    	
-	    	if ((browserStackProxyUser != null && !browserStackProxyUser.isEmpty()) ||
-	    			(browserStackProxyPasssword != null && !browserStackProxyPasssword.isEmpty())) {
-		    	System.getProperties().put("https.proxyHost", "172.18.100.15");
-		    	System.getProperties().put("https.proxyPort", "18717");
-		    	System.getProperties().put("https.proxyUser", browserStackProxyUser);
-		    	System.getProperties().put("https.proxyPassword", browserStackProxyPasssword);
-	    	}
+	    	caps.setCapability("build", "Local Run " + System.currentTimeMillis());
 	    	
-	    	caps.setCapability("os", "Windows");
-	    	caps.setCapability("os_version", "10");
-	    	caps.setCapability("browserstack.local", "true");
-	    	
-	    	String localIdentifier = System.getProperty(PropertyConstants.BROWSER_STACK_IDENTIFIER);
-	    	if (localIdentifier != null && !localIdentifier.isEmpty()) {
-	    		caps.setCapability("browserstack.localIdentifier", localIdentifier);
-	    		caps.setCapability("build", localIdentifier);
-	    	} else {
-	    		caps.setCapability("build", "Local Run " + System.currentTimeMillis());
-	    	}
-	    	caps.setCapability("project", "ATLAS Automation");
+	    	caps.setCapability("project", "Selenium Automation");
 	    	caps.setCapability("name", threadDriver.get().getTestName());
 	    	
 	    	String browserType = getBrowserType();
 	    	
 	    	if (browserType.equals("chrome")) { 
-	    		caps.setCapability("browser", "Chrome");
-		    	caps.setCapability("browser_version", "70.0");
+	    		caps.setCapability("browserName", "Chrome");
+		    	caps.setCapability("version", "73.0");
 		    	
 	    	} else if (browserType.startsWith("ie")) {
 	    		
 	    		String versionNumber = "11.0";
-	    		if (!browserType.replaceAll("[^0-9]+", "").isEmpty()) {
-	    			versionNumber = browserType.replaceAll("[^0-9]+", "") + ".0";
+	    		if (!browserType.replaceAll("[^0-9.]+", "").isEmpty()) {
+	    			versionNumber = browserType.replaceAll("[^0-9.]+", "");
 	    		}
 	    		
-	    		caps.setCapability("browser", "IE");
-	    		caps.setCapability("browser_version", versionNumber);
+	    		caps.setCapability("version", versionNumber);
+	    	} else if (browserType.startsWith("firefox")) { 
+	    		caps.setCapability("version", "66.0");
+		    	
 	    	}
 	    }
 	    
@@ -351,10 +357,6 @@ public abstract class BaseTest implements ITest {
 
             e.printStackTrace();
         }
-	    
-	    if (hubURL.contains("browserstack")) {
-	    	threadDriver.get().setSessionID(driver.getSessionId());
-	    }
 	    
 	    return driver;
 	}
