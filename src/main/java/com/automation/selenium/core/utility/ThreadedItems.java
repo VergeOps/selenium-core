@@ -19,7 +19,6 @@ public class ThreadedItems {
     private SoftAssert softAssert;
     private ExtentTest test;
     private WebDriver driver;
-    private SessionId sessionID;
 
     /**
      * Method to get the test name
@@ -88,24 +87,5 @@ public class ThreadedItems {
     public void setDriver(WebDriver driver) {
           this.driver = driver;
     }
-
-    /**
-     * Method to get the session id
-     * 
-     * @return SessionId The session id object
-     */
-	public SessionId getSessionID() {
-		return sessionID;
-	}
-
-	 /**
-     * Method to set the session id
-     * 
-     * @param sessionID The session id
-     */
-	public void setSessionID(SessionId sessionID) {
-		this.sessionID = sessionID;
-	}
-
 
 }
