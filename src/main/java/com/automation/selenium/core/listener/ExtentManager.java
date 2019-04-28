@@ -25,13 +25,13 @@ public class ExtentManager {
    * 
    * @return the instance of the manager
    */
-  public static ExtentReports getInstance() {
+  public synchronized static ExtentReports getInstance() {
     if (extent == null)
       createInstance();
     return extent;
   }
 
-  private static ExtentReports createInstance() {
+  private synchronized static ExtentReports createInstance() {
 
     createReportPath(path);
 

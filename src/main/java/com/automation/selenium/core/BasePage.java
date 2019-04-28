@@ -103,6 +103,15 @@ public abstract class BasePage {
 	protected void waitForInvisible(WebElement element) {
 		getWait().until(ExpectedConditions.invisibilityOf(element));
 	}
+	
+	/**
+	 * Method to wait for an element to contain specified text
+	 * 
+	 * @param element WebElement to wait to have text
+	 */
+	protected void waitForText(WebElement element, String text) {
+		getWait().until(ExpectedConditions.textToBePresentInElement(element, text));
+	}
 
 	/**
 	 * Method to hover over an element

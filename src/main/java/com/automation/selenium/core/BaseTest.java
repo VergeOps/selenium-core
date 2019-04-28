@@ -1,11 +1,18 @@
 package com.automation.selenium.core;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.JavascriptExecutor;
@@ -19,7 +26,9 @@ import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.SessionId;
 import org.testng.ITest;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterTest;
@@ -101,6 +110,7 @@ public abstract class BaseTest implements ITest {
 				String.format("%s: %s", methodTestName, params));
 		
 		ExtentTest extentTest = ExtentManager.getInstance().createTest(String.format("%s: %s", methodTestName, params));
+		
 		threadDriver.get().setTest(extentTest);
 		threadDriver.get().setSoftAssert(new SoftAssert(new SoftAssertSelenium()));
 
@@ -322,14 +332,17 @@ public abstract class BaseTest implements ITest {
 	    
 	    String hubURL = "http://localhost:4444/wd/hub";
 	    
+	    boolean isSauce = false;
+	    
 	    if ((sauceUser != null && !sauceUser.isEmpty()) ||
     			(sauceAccessKey != null && !sauceAccessKey.isEmpty())) {
+	    	isSauce = true;
+	    	getExtentTest().info("Running in Sauce");
+	    	
 	    	hubURL = "http://ondemand.saucelabs.com:80/wd/hub";
 	    	
 	    	caps.setCapability("username", sauceUser);
 	        caps.setCapability("accessKey", sauceAccessKey);
-
-	        caps.setCapability("name", "Selenium Automation");
 
 	        caps.setCapability("maxDuration", 3600);
 	        caps.setCapability("commandTimeout", 600);
@@ -365,6 +378,28 @@ public abstract class BaseTest implements ITest {
 	    try {
 	    	System.out.println("Attempting connection to " + hubURL);
 	    	driver = new RemoteWebDriver(new URL(hubURL), caps);
+	    	
+			driver.setFileDetector(new LocalFileDetector());
+	    	
+	    	if (isSauce) {
+	    		SessionId sessionId = driver.getSessionId();
+	    		String authKey = sauceUser + ":" + sauceAccessKey;
+	    		getExtentTest().info("SessionID: " + sessionId.toString());
+	    		
+				try {
+					SecretKeySpec sk = new SecretKeySpec(authKey.getBytes(), "HMACMD5"); 
+		            Mac mac = Mac.getInstance("HmacMD5");
+					mac.init(sk);
+					byte[] result = mac.doFinal(sessionId.toString().getBytes());
+					byte[] hexBytes = new Hex().encode(result); 
+			        authKey = new String(hexBytes, "ISO-8859-1"); 
+				} catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+	            getExtentTest().info("<script src=\"https://saucelabs.com/job-embed/" + sessionId.toString() + ".js?auth=" + authKey + "\"></script>");
+	            getExtentTest().info("<script src=\"https://saucelabs.com/video-embed/" + sessionId.toString() + ".js?auth=" + authKey + "\"></script>");
+	    	}
+	    	
         } catch (MalformedURLException e) {
 
             e.printStackTrace();
